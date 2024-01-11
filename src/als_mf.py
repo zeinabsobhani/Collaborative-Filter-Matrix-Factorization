@@ -78,11 +78,14 @@ class ALS_MF:
                                             (ratings[:, p]*w[:,p]).dot(self.user_latent_factor))
 
             
-            train_error = self.calculate_mae(df_train,  self.user_latent_factor, self.product_latent_factor)
-            val_error = self.calculate_mae(df_val,  self.user_latent_factor, self.product_latent_factor)
+            train_error = self.calculate_mae(df_train)
+            val_error = self.calculate_mae(df_val)
 
             print("train error: ", train_error)
             print("val error: ", val_error)
+            
+            self.train_errors.append(train_error)
+            self.val_errors.append(val_error)
 
 
 from download_data import DataLoader
