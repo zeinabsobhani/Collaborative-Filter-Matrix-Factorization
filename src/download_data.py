@@ -15,8 +15,10 @@ class DataLoader:
         pass
 
 
-    def download_and_extract_from_url(self,url,save_to = None):
+    def download_and_extract_from_url(self,url = None,save_to = None):
         r = requests.get(url, stream=True)
+        if not url:
+            url = config['url']
         if not save_to:
             save_to = url.split("/")[-1].split(".gz")[0]
         save_to = "./data/raw/"+save_to
