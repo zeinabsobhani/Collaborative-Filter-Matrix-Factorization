@@ -1,6 +1,7 @@
 #data folder
-data/*
+data/**
 .vscode/*
 __pycache__/
 *.py[cod]
 *$py.class
+

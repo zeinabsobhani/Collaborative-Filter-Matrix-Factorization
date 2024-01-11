@@ -21,6 +21,9 @@ class SGD_MF:
         self.product_bias = np.random.random((num_unique_items,1))
         self.offset = 0
 
+    def predict(self, u, p):
+        return np.matmul(self.user_latent_factor[u,:],self.product_latent_factor[:,p]) + self.user_bias[u] + self.product_bias[p] + self.offset
+    
     def calculate_mae(self, df):
         errors = []
         for row in df.iterrows():
@@ -37,12 +40,12 @@ class SGD_MF:
         self.user_col = user_col
         self.item_col = item_col
         self.rating_col = rating_col
-
-        # different initialization for offset
+        
         num_unique_users = df_train[user_col].nunique()
         num_unique_items = df_train[item_col].nunique()
 
         self.random_initialize(num_unique_users, num_unique_items, self.M)
+        # different initialization for offset
         self.offset = np.mean(df_train[rating_col])
     
         for epoch in range(n_epoch):
@@ -76,26 +79,4 @@ class SGD_MF:
 
 
 
-    def predict(self, u, p):
-        return np.matmul(self.user_latent_factor[u,:],self.product_latent_factor[:,p]) + self.user_bias[u] + self.product_bias[p] + self.offset
 
-
-
-from download_data import DataLoader
-from preprocessor import PreProcessor
-dl = DataLoader()
-df = dl.load_raw_as_df()
-print(df.head())
-df = df.rename(columns = {'overall':'ratings'})
-pp = PreProcessor(df, user_col = 'reviewerID',item_col = 'asin', time_col = 'reviewTime')
-pp.full_preprocess(num_tests=2)
-
-df_train = pp.df_train
-df_val = pp.df_val
-
-M = 16
-mf = SGD_MF(M)
-
-# print(**config['sgd_params'])
-
-mf.train(df_train , df_val, user_col = 'reviewerID', item_col = 'asin', rating_col = 'ratings',**config['sgd_params'])
