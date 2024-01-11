@@ -1,0 +1,12 @@
+data_url: "https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_v2/categoryFilesSmall/Arts_Crafts_and_Sewing_5.json.gz"
+
+
+sgd_params:
+  lr: 0.01
+  n_epoch: 20
+  lambda_u: 0.2
+  lambda_p: 0.2
+  lambda_ub: 0.5
+  lambda_pb: 0.5
+  lambda_offset: 0.5
+  
