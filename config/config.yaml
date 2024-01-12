@@ -14,3 +14,8 @@ als_params:
   n_epoch: 20
   lambda_u: 0.2
   lambda_p: 0.2
+
+embeddings_params:
+  n_epoch: 100
+  lr: 0.01
+  weight_decay: 0.01
