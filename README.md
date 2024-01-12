@@ -78,3 +78,18 @@ mf = SGD_MF(M)
 mf.train(df_train , df_val, user_col = 'reviewerID', item_col = 'asin', rating_col = 'ratings',**config['als_params'])
 mf.predict(u =10, p = 10)
 ```
+
+### Embeddings
+This model uses a embedding structure to encode Items and Users. To train the model, follow the previous steps to generate `df_train` and `df_val`:
+```
+num_unique_users = df_train[user_col].nunique()
+num_unique_items = df_train[item_col].nunique()
+M = 16
+emb = Embeddings(M, num_unique_users, num_unique_items)
+dl_train, dl_val = emb.load_data(df_train, df_val, user_col, item_col, rating_col, batch = 1000,)
+emb.train(dl_train , dl_val ,lr= 0.01, weight_decay = 0.01 , n_epoch = 20)
+```
+To predict:
+```
+emb.predict(df_val)
+```

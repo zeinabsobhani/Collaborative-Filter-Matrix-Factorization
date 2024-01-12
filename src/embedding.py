@@ -77,6 +77,22 @@ class Embeddings:
         dl_val = tud.DataLoader(ds_val, batch, shuffle=True)
         return dl_train, dl_val
 
+    def predict(self,df):
+        """
+        Predict the ratings
+        Args:
+            df (pd.DataFrame): dataframe containing `user_col` and `item_col`
+        Returns:
+            preds (np.array): numpy array of predictions.
+        """
+        self.model.eval()
+        xUser = torch.tensor(df[self.user_col].values)
+        xUser = xUser.to(device, dtype=torch.long)
+        xItem = torch.tensor(df[self.item_col].values)
+        xItem = xItem.to(device, dtype=torch.long)
+        preds = self.model(xUser, xItem)
+        return preds.detach().numpy()
+
     def train(self, dl_train , dl_val ,lr: 0.01, weight_decay = 0.01 , n_epoch = 20):
         """
         Train the embedding model.
@@ -124,4 +140,3 @@ class Embeddings:
 
             print("train MSE loss: ", epoch_train_loss)
             print("val MSE loss: ", epoch_val_loss)
-
