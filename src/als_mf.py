@@ -1,38 +1,23 @@
 import numpy as np
 from numpy.linalg import solve
 import yaml
+from base_mf import BaseMF
 
 with open("./config/config.yaml", "rt") as config_file:
     config = yaml.safe_load(config_file)
 
-class ALS_MF:
-    def __init__(self, M):
-        
-        self.train_errors = []
-        self.val_errors = []
-        self.M = M
-
-    def random_initialize(self,num_unique_users, num_unique_items, M):
-        self.user_latent_factor = np.random.random((num_unique_users, M))
-        self.product_latent_factor = np.random.random((M, num_unique_items))
-
-
-    def calculate_mae(self, df):
-        errors = []
-        for row in df.iterrows():
-            u = int(row[1][self.user_col])
-            p = int(row[1][self.item_col])
-            
-            pred = self.predict(u,p)
-            error = row[1][self.rating_col] - pred
-            errors.append(error)
-        return np.mean(np.abs(errors))
-    
-
-    def predict(self, u, p):
-        return np.matmul(self.user_latent_factor[u,:],self.product_latent_factor[:,p])
-    
+class ALS_MF(BaseMF):
+    """
+    Matrix Factorization with ALS Class. Inherits the Base Matrix Factorization Class.
+    """
     def pivot_target(self, df):
+        """
+        Creates matrix of ratings where rows are users and columns are items, by pivoting. For easier query in training.
+        Args:
+            df (pd.DataFrame): dataframe to pivot.
+        Returns:
+            pivot_table (np.array): matrix of ratings
+        """
         rows, row_pos = np.unique(df[self.user_col], return_inverse=True)
         cols, col_pos = np.unique(df[self.item_col], return_inverse=True)
         
@@ -42,6 +27,19 @@ class ALS_MF:
         return pivot_table
 
     def train(self, df_train , df_val, user_col = 'reviewerID', item_col = 'asin', rating_col = 'ratings', n_epoch = 10, lambda_u = 0.1, lambda_p = 0.1,):
+        """
+        ALS training. Initializes and updates attributes `user_latent_factor`, `product_latent_factor`,
+                    `train_errors` and `val_errors`.
+        Args:
+            df_train (pd.DataFrame): training data set
+            df_val (pd.DataFrame): validation dataset
+            user_col (str): name of the column to be used as user, Default `reviewerID`.
+            item_col (str): name of the column to be used as item, Default `asin`.
+            rating_col (str): name of the column to be used as rating, Default `ratings`.
+            n_epoch (int): number of training epochs, Default 10.
+            lambda_u (float): user matrix regularization, Default 0.1.
+            lambda_p (float): item matrix regularization, Default 0.1.
+        """
         self.user_col = user_col
         self.item_col = item_col
         self.rating_col = rating_col
@@ -49,7 +47,7 @@ class ALS_MF:
         num_unique_users = df_train[user_col].nunique()
         num_unique_items = df_train[item_col].nunique()
 
-        self.random_initialize(num_unique_users, num_unique_items, self.M)
+        self.initialize(num_unique_users, num_unique_items, self.M)
         ratings = self.pivot_target(df_train)
 
         # excluding 0 ratings from the training
@@ -67,7 +65,6 @@ class ALS_MF:
                 self.user_latent_factor[u, :] = solve((XTX + lambdaI), 
                                             (ratings[u, :]*w[u,:]).dot(self.product_latent_factor.T ))
 
-            
 
             for p in range(num_unique_items):
                 
@@ -81,28 +78,8 @@ class ALS_MF:
             train_error = self.calculate_mae(df_train)
             val_error = self.calculate_mae(df_val)
 
-            print("train error: ", train_error)
-            print("val error: ", val_error)
-            
+            print("train MAE error: ", train_error)
+            print("val MAE error: ", val_error)
+
             self.train_errors.append(train_error)
             self.val_errors.append(val_error)
-
-
-from download_data import DataLoader
-from preprocessor import PreProcessor
-dl = DataLoader()
-df = dl.load_raw_as_df()
-print(df.head())
-df = df.rename(columns = {'overall':'ratings'})
-pp = PreProcessor(df, user_col = 'reviewerID',item_col = 'asin', time_col = 'reviewTime')
-pp.full_preprocess(num_tests=2)
-
-df_train = pp.df_train
-df_val = pp.df_val
-
-M = 16
-mf = ALS_MF(M)
-
-# print(**config['sgd_params'])
-
-mf.train(df_train , df_val, user_col = 'reviewerID', item_col = 'asin', rating_col = 'ratings',**config['als_params'])
